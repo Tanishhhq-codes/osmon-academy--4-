@@ -7,6 +7,7 @@ import DialogueBox from './game/components/DialogueBox'
 import QuizModal from './game/components/QuizModal'
 import InventoryPanel from './game/components/InventoryPanel'
 import AreaTransition from './game/components/AreaTransition'
+import MusicController from './game/components/MusicController'
 
 function Game() {
   const { state } = useGame()
@@ -22,6 +23,9 @@ function Game() {
           <div style={{ position:'absolute', inset:0 }}>
             <GameCanvas />
           </div>
+
+          {/* Map music + volume controls */}
+          <MusicController enabled={true} />
 
           {/* Battle overlays the canvas */}
           {state.phase === 'battle' && (

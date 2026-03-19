@@ -96,6 +96,45 @@ function makePortalGate(color: number, isNS: boolean): THREE.Group {
   return g
 }
 
+function makeDoor(color: number, isNS: boolean): THREE.Group {
+  const g = new THREE.Group()
+
+  const postW = 0.22
+  const postH = 1.8
+  const postD = 0.22
+  const offset = T / 2 - postW / 2 - 0.02
+
+  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.8, metalness: 0.06 })
+  const postGeom = new THREE.BoxGeometry(postW, postH, postD)
+
+  const postA = new THREE.Mesh(postGeom, mat)
+  const postB = new THREE.Mesh(postGeom, mat)
+  if (isNS) {
+    postA.position.set(-offset, postH / 2, 0)
+    postB.position.set(offset, postH / 2, 0)
+  } else {
+    postA.position.set(0, postH / 2, -offset)
+    postB.position.set(0, postH / 2, offset)
+  }
+  postA.castShadow = true
+  postB.castShadow = true
+  g.add(postA)
+  g.add(postB)
+
+  const lintel = new THREE.Mesh(
+    new THREE.BoxGeometry(
+      isNS ? offset * 2 + postW : postW,
+      0.16,
+      isNS ? postD : offset * 2 + postD
+    ),
+    mat
+  )
+  lintel.position.y = postH - 0.04
+  g.add(lintel)
+
+  return g
+}
+
 export default function GameCanvas() {
   const mountRef        = useRef<HTMLDivElement>(null)
   const rendererRef     = useRef<THREE.WebGLRenderer | null>(null)
@@ -209,6 +248,30 @@ export default function GameCanvas() {
             const roof = new THREE.Mesh(new THREE.BoxGeometry(T+0.10,0.20,T+0.10),
               new THREE.MeshStandardMaterial({ color: roofCol, roughness: 0.92, metalness: 0.02 }))
             roof.position.set(wx, wallH+0.10, wz); wg.add(roof)
+          }
+
+        } else if (t === 3) {
+          // Door frames: path tiles that cut through walls
+          const tile = (r: number, c: number) => area.map[r]?.[c]
+          const isWall = (r: number, c: number) => tile(r, c) === 2
+          const isPath = (r: number, c: number) => tile(r, c) === 3
+
+          const hasWallLeft = isWall(row, col-1)
+          const hasWallRight = isWall(row, col+1)
+          const hasWallTop = isWall(row-1, col)
+          const hasWallBottom = isWall(row+1, col)
+
+          const isDoorNS = hasWallLeft && hasWallRight && !hasWallTop && !hasWallBottom
+          const isDoorEW = hasWallTop && hasWallBottom && !hasWallLeft && !hasWallRight
+          const isDoor = isDoorNS || isDoorEW
+
+          // Only render one frame per door pair (skip the second tile)
+          const isDuplicate = (isDoorNS && isPath(row, col-1)) || (isDoorEW && isPath(row-1, col))
+          if (isDoor && !isDuplicate) {
+            const doorColor = a.buildingColor ?? a.wallColor
+            const door = makeDoor(doorColor, isDoorNS)
+            door.position.set(wx, 0, wz)
+            wg.add(door)
           }
 
         } else if (t === 4) {
