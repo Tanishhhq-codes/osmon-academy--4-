@@ -5,12 +5,12 @@ const STORAGE_KEY = 'osmon_music_v1'
 
 const AREA_TO_TRACK: Record<string, string> = {
   'CPU Valley': '/audio/music/cpu_valley.mp3',
-  'Process Plains': '/audio/music/process_plains.mp3',
-  'Memory Mountains': '/audio/music/memory_mountains.mp3',
-  'File Forest': '/audio/music/file_forest.mp3',
-  'Sync Sanctuary': '/audio/music/sync_sanctuary.mp3',
-  'Network Nexus': '/audio/music/network_nexus.mp3',
-  'Kernel Castle': '/audio/music/kernel_castle.mp3',
+  'Process Plains': '/audio/music/process.mp3',
+  'Memory Mountains': '/audio/music/process.mp3',
+  'File Forest': '/audio/music/sync.mp3',
+  'Sync Sanctuary': '/audio/music/sync.mp3',
+  'Network Nexus': '/audio/music/network.mp3',
+  'Kernel Castle': '/audio/music/kernal.mp3',
 }
 
 function clamp01(n: number) {
