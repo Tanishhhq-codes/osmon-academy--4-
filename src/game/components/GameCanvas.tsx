@@ -251,7 +251,11 @@ export default function GameCanvas() {
           }
 
         } else if (t === 3) {
-          // Door frames: path tiles that cut through walls
+          // Path tile (floor), with door frames where paths cut through walls
+          const base = new THREE.Mesh(new THREE.BoxGeometry(T, 0.10, T),
+            new THREE.MeshStandardMaterial({ color: a.pathColor, roughness: 0.92, metalness: 0.03 }))
+          base.position.set(wx, 0.05, wz); base.receiveShadow = true; wg.add(base)
+
           const tile = (r: number, c: number) => area.map[r]?.[c]
           const isWall = (r: number, c: number) => tile(r, c) === 2
           const isPath = (r: number, c: number) => tile(r, c) === 3
@@ -361,11 +365,11 @@ export default function GameCanvas() {
           petal.position.set(wx, 0.56, wz); wg.add(petal)
 
         } else {
-          // GRASS(0), PATH(3), NPC_SPAWN(8) — flat tile
-          const tileH = t === 3 ? 0.10 : 0.14
-          const tileCol = t === 3 ? a.pathColor : a.grassColor
+          // GRASS(0), NPC_SPAWN(8) — flat tile
+          const tileH = 0.14
+          const tileCol = a.grassColor
           const mesh = new THREE.Mesh(new THREE.BoxGeometry(T, tileH, T),
-            new THREE.MeshStandardMaterial({ color: tileCol, roughness: 0.92, metalness: t === 3 ? 0.03 : 0.0 }))
+            new THREE.MeshStandardMaterial({ color: tileCol, roughness: 0.92, metalness: 0.0 }))
           mesh.position.set(wx, tileH / 2, wz); mesh.receiveShadow = true; wg.add(mesh)
         }
       }
