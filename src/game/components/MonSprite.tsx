@@ -20,9 +20,6 @@ export default function MonSprite({ mon, size = 120, flip = false, animate = tru
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true })
     renderer.setSize(size, size)
     renderer.setPixelRatio(window.devicePixelRatio)
-    renderer.outputColorSpace = THREE.SRGBColorSpace
-    renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.1
 
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100)
@@ -34,15 +31,12 @@ export default function MonSprite({ mon, size = 120, flip = false, animate = tru
     const light = new THREE.DirectionalLight(0xffeedd, 1.0)
     light.position.set(3, 5, 5)
     scene.add(light)
-    const rim = new THREE.DirectionalLight(0x88ccff, 0.35)
-    rim.position.set(-4, 2.5, -3)
-    scene.add(rim)
 
     const color1 = parseInt(mon.spriteColor.replace('#', ''), 16)
     const color2 = parseInt(mon.spriteAccent.replace('#', ''), 16)
-    const mat1 = new THREE.MeshStandardMaterial({ color: color1, roughness: 0.75, metalness: 0.08 })
-    const mat2 = new THREE.MeshStandardMaterial({ color: color2, roughness: 0.70, metalness: 0.10 })
-    const matEye = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x888888, roughness: 0.25, metalness: 0.0 })
+    const mat1 = new THREE.MeshLambertMaterial({ color: color1 })
+    const mat2 = new THREE.MeshLambertMaterial({ color: color2 })
+    const matEye = new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0x888888 })
 
     const group = new THREE.Group()
     const variant = mon.name.charCodeAt(0) % 5
@@ -83,10 +77,7 @@ export default function MonSprite({ mon, size = 120, flip = false, animate = tru
       body.position.y = 1.0; group.add(body)
       const head = new THREE.Mesh(new THREE.SphereGeometry(0.55, 10, 8), mat2)
       head.position.set(0, 2.05, 0.1); group.add(head)
-      const cheekL = new THREE.Mesh(
-        new THREE.SphereGeometry(0.18, 8, 6),
-        new THREE.MeshStandardMaterial({ color: 0xff6688, roughness: 0.65, metalness: 0.05 })
-      )
+      const cheekL = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 6), new THREE.MeshLambertMaterial({ color: 0xff6688 }))
       cheekL.position.set(-0.32, 2.0, 0.5); group.add(cheekL)
       const cheekR = cheekL.clone()
       cheekR.position.set(0.32, 2.0, 0.5); group.add(cheekR)
@@ -119,7 +110,7 @@ export default function MonSprite({ mon, size = 120, flip = false, animate = tru
         spike.rotation.z = -angle + Math.PI / 2; group.add(spike)
       }
       const eyeC = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8),
-        new THREE.MeshStandardMaterial({ color: 0xff4400, emissive: 0xff2200, roughness: 0.25, metalness: 0.0 }))
+        new THREE.MeshLambertMaterial({ color: 0xff4400, emissive: 0xff2200 }))
       eyeC.position.set(0, 1.15, 0.75); group.add(eyeC)
     }
 

@@ -56,12 +56,12 @@ export default function GameUI() {
     return () => window.removeEventListener('keydown', handler)
   }, [state.phase, dispatch])
 
-  // Auto-clear levelUpMsg after 3.2s using correct action
+  // Auto-clear levelUpMsg after 3s
   useEffect(() => {
     if (!state.levelUpMsg) return
     if (lvUpTimerRef.current) clearTimeout(lvUpTimerRef.current)
     lvUpTimerRef.current = setTimeout(() => {
-      dispatch({ type: 'CLEAR_LEVEL_UP_MSG' })
+      dispatch({ type: 'SET_NOTIFICATION', msg: '' })
     }, 3200)
     return () => { if (lvUpTimerRef.current) clearTimeout(lvUpTimerRef.current) }
   }, [state.levelUpMsg, dispatch])
@@ -116,7 +116,7 @@ export default function GameUI() {
         </button>
       </div>
 
-      {/* ── BOTTOM-LEFT: Party roster ── */}
+      {/* ── BOTTOM-LEFT: Party roster with HP + XP bars ── */}
       {party.length > 0 && (
         <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-1.5 pointer-events-none">
           {party.slice(0, 4).map((mon, i) => (
@@ -125,17 +125,15 @@ export default function GameUI() {
               border: `1px solid rgba(255,255,255,0.07)`,
               padding: '5px 10px', minWidth: 180,
               backdropFilter: 'blur(8px)',
-              opacity: mon.curHp <= 0 ? 0.45 : 1,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 3 }}>
                 <div style={{
                   width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
-                  background: mon.curHp <= 0 ? '#555'
-                    : mon.curHp > mon.maxHp * 0.5 ? '#3db83d'
+                  background: mon.curHp > mon.maxHp * 0.5 ? '#3db83d'
                     : mon.curHp > mon.maxHp * 0.2 ? '#d4a017' : '#c82020',
                 }} />
                 <span className="font-pixel" style={{ fontSize: 7, color: '#aabbcc', flex: 1, overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                  {mon.name.slice(0, 10)}{mon.curHp <= 0 ? ' ✕' : ''}
+                  {mon.name.slice(0, 10)}
                 </span>
                 <span className="font-pixel" style={{ fontSize: 7, color: '#e8a020' }}>
                   Lv.{mon.lv}
@@ -174,18 +172,14 @@ export default function GameUI() {
 
       {/* ── LEVEL UP NOTIFICATION ── */}
       {state.levelUpMsg && (
-        <div
-          className="absolute z-50"
+        <div className="absolute z-50 pointer-events-none"
           style={{
             top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-            background: 'rgba(4,4,16,0.97)',
+            background: 'rgba(4,4,16,0.95)',
             border: '2px solid #e8a020',
-            padding: '18px 32px', textAlign: 'center',
+            padding: '14px 28px', textAlign: 'center',
             animation: 'slideUp 0.3s ease-out',
-            cursor: 'pointer',
-            pointerEvents: 'auto',
-          }}
-          onClick={() => dispatch({ type: 'CLEAR_LEVEL_UP_MSG' })}>
+          }}>
           <div className="font-pixel" style={{ fontSize: 8, color: '#e8a020', marginBottom: 6 }}>
             ★ LEVEL UP! ★
           </div>
@@ -194,9 +188,6 @@ export default function GameUI() {
               {msg}
             </div>
           ))}
-          <div className="font-pixel" style={{ fontSize: 6, color: '#445566', marginTop: 8 }}>
-            click or wait to close
-          </div>
         </div>
       )}
     </>

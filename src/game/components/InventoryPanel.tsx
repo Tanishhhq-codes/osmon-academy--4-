@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { useGame } from '../../context/GameContext'
 import { MONS, RARITY_LABELS, OsMon } from '../data/osmons'
+import { xpForLevel } from '../systems/battleSystem'
 import MonSprite from './MonSprite'
 
 const TYPE_COLORS: Record<string, string> = {
@@ -200,34 +201,66 @@ function RosterTab() {
     )
   return (
     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-      {party.map((mon, i) => (
-        <div key={i} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6, padding:12,
-          background:'#090916', border:`1.5px solid ${TYPE_COLORS[mon.type]??'#1a3a6e'}44` }}>
-          <MonSprite mon={mon} size={80} animate={true} />
-          <div className="font-pixel" style={{ fontSize:8, color:'#e8c870' }}>{mon.name}</div>
-          <div className="font-pixel" style={{ fontSize:6, color:'#445' }}>Lv.{mon.lv} · {mon.concept}</div>
-          <div style={{ width:'100%' }}><HpBar cur={mon.curHp} max={mon.maxHp} /></div>
-          <div className="font-pixel" style={{ fontSize:6, color:'#667' }}>{mon.curHp}/{mon.maxHp} HP</div>
-          {mon.status !== 'none' && (
-            <span className="font-pixel" style={{ fontSize:6, background:'#3a1500', color:'#ff8844', padding:'2px 5px' }}>
-              {mon.status.toUpperCase()}
-            </span>
-          )}
-          <div style={{ width:'100%', marginTop:2 }}>
-            {mon.moves.slice(0,4).map(mId => (
-              <div key={mId} className="font-pixel" style={{ fontSize:6, color:'#334', marginBottom:2 }}>
-                · {mId.replace(/_/g,' ').toUpperCase()}
+      {party.map((mon, i) => {
+        const needed = xpForLevel(mon.lv + 1)
+        const xpPct = Math.min(100, ((mon.xp ?? 0) / needed) * 100)
+        const typeCol = TYPE_COLORS[mon.type] ?? '#1a3a6e'
+        return (
+          <div key={i} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:5, padding:12,
+            background:'#090916', border:`1.5px solid ${typeCol}44` }}>
+            <MonSprite mon={mon} size={80} animate={true} />
+            <div className="font-pixel" style={{ fontSize:8, color:'#e8c870' }}>{mon.name}</div>
+            <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+              <span className="font-pixel" style={{ fontSize:8, color:'#e8a020' }}>Lv.{mon.lv}</span>
+              <span className="font-pixel" style={{ fontSize:6, color:typeCol }}>{mon.type}</span>
+            </div>
+            {/* HP */}
+            <div style={{ width:'100%' }}><HpBar cur={mon.curHp} max={mon.maxHp} /></div>
+            <div className="font-pixel" style={{ fontSize:6, color:'#667' }}>{mon.curHp}/{mon.maxHp} HP</div>
+            {/* XP bar */}
+            <div style={{ width:'100%' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:2 }}>
+                <span className="font-pixel" style={{ fontSize:5, color:'#2244aa' }}>XP to next level</span>
+                <span className="font-pixel" style={{ fontSize:5, color:'#2244aa' }}>{mon.xp ?? 0}/{needed}</span>
               </div>
-            ))}
+              <div style={{ height:4, background:'#111', borderRadius:2, overflow:'hidden' }}>
+                <div style={{ height:'100%', width:`${xpPct}%`, background:'#3366ff', borderRadius:2, transition:'width 0.4s' }} />
+              </div>
+            </div>
+            {/* Stats */}
+            <div style={{ width:'100%', display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:3, marginTop:2 }}>
+              {[
+                { label:'ATK', val: mon.atkScaled ?? mon.attack },
+                { label:'DEF', val: mon.defScaled ?? mon.defense },
+                { label:'SPD', val: mon.spdScaled ?? mon.speed },
+              ].map(st => (
+                <div key={st.label} style={{ textAlign:'center', background:'#0a0a1a', padding:'3px 0', borderRadius:2 }}>
+                  <div className="font-pixel" style={{ fontSize:5, color:'#334' }}>{st.label}</div>
+                  <div className="font-pixel" style={{ fontSize:9, color:'#aabbcc' }}>{st.val}</div>
+                </div>
+              ))}
+            </div>
+            {mon.status !== 'none' && (
+              <span className="font-pixel" style={{ fontSize:6, background:'#3a1500', color:'#ff8844', padding:'2px 5px' }}>
+                {mon.status.toUpperCase()}
+              </span>
+            )}
+            <div style={{ width:'100%', marginTop:2 }}>
+              {mon.moves.slice(0,4).map(mId => (
+                <div key={mId} className="font-pixel" style={{ fontSize:6, color:'#334', marginBottom:2 }}>
+                  · {mId.replace(/_/g,' ').toUpperCase()}
+                </div>
+              ))}
+            </div>
+            {mon.curHp < mon.maxHp && state.items.potion > 0 && (
+              <button className="font-pixel cursor-pointer" style={{ fontSize:6, padding:'4px 8px', background:'#0a1808', color:'#88ff88', border:'1px solid #44aa44' }}
+                onClick={() => dispatch({ type:'USE_POTION' })}>
+                USE POTION ({state.items.potion})
+              </button>
+            )}
           </div>
-          {mon.curHp < mon.maxHp && state.items.potion > 0 && (
-            <button className="font-pixel cursor-pointer" style={{ fontSize:6, padding:'4px 8px', background:'#0a1808', color:'#88ff88', border:'1px solid #44aa44' }}
-              onClick={() => dispatch({ type:'USE_POTION' })}>
-              USE POTION ({state.items.potion})
-            </button>
-          )}
-        </div>
-      ))}
+        )
+      })}
       {Array.from({ length: Math.max(0, 6-party.length) }).map((_,i) => (
         <div key={`e${i}`} style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:100,
           background:'#050510', border:'1.5px dashed #0d1428', opacity:0.35 }}>

@@ -7,22 +7,14 @@ import DialogueBox from './game/components/DialogueBox'
 import QuizModal from './game/components/QuizModal'
 import InventoryPanel from './game/components/InventoryPanel'
 import AreaTransition from './game/components/AreaTransition'
-import GameOver from './game/components/GameOver'
-import BattleWatcher from './game/components/BattleWatcher'
-import MusicController from './game/components/MusicController'
 
 function Game() {
   const { state } = useGame()
-  const isTitle = state.phase === 'title'
-  const isGameOver = state.phase === 'gameover'
-  const started = !isTitle && !isGameOver
+  const started = state.phase !== 'title'
 
   return (
     <div style={{ width:'100vw', height:'100vh', overflow:'hidden', position:'relative', background:'#050510' }}>
-      <BattleWatcher />
-      {isTitle && <TitleScreen />}
-
-      {isGameOver && <GameOver />}
+      {!started && <TitleScreen />}
 
       {started && (
         <>
@@ -40,9 +32,6 @@ function Game() {
 
           {/* HUD */}
           <GameUI />
-
-          {/* Music */}
-          <MusicController />
 
           {/* Dialogue */}
           {state.phase === 'dialogue' && <DialogueBox />}

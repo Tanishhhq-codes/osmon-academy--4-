@@ -12,8 +12,6 @@ export default function TitleScreen() {
   const [saveExists] = useState(() => hasSave())
   const { dispatch } = useGame()
 
-
-
   useEffect(() => {
     if (!mountRef.current) return
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })

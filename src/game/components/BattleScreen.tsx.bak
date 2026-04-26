@@ -79,24 +79,14 @@ export default function BattleScreen() {
   const { wildMon, party, battlePhase, battleLog, battleResult, items } = state
   const player = party[0]
   const [showMoves, setShowMoves] = useState(false)
-  const [showSwitch, setShowSwitch] = useState(false)
 
-  useEffect(() => {
-    if (battlePhase !== 'menu') { setShowMoves(false); setShowSwitch(false) }
-  }, [battlePhase])
+  useEffect(() => { if (battlePhase !== 'menu') setShowMoves(false) }, [battlePhase])
 
-  // When battle ends with a loss, show game over then return to title
   useEffect(() => {
     if (battlePhase !== 'end') return
-    if (battleResult === 'lose') {
-      // Show game over after a short delay
-      const t = setTimeout(() => dispatch({ type: 'SET_PHASE', phase: 'gameover' }), 2600)
-      return () => clearTimeout(t)
-    }
-    // Win/caught/ran: return to exploring
-    const t = setTimeout(() => dispatch({ type: 'SET_PHASE', phase: 'exploring' }), 2600)
+    const t = setTimeout(() => dispatch({ type:'SET_PHASE', phase:'exploring' }), 2600)
     return () => clearTimeout(t)
-  }, [battlePhase, battleResult, dispatch])
+  }, [battlePhase, dispatch])
 
   if (!wildMon || !player) return null
 
@@ -107,14 +97,11 @@ export default function BattleScreen() {
     battleResult==='win'    ? `${wildMon.name} fainted! Victory!` :
     battleResult==='caught' ? `Gotcha! ${wildMon.name} caught!`   :
     battleResult==='ran'    ? 'Got away safely!'                   :
-    battleResult==='lose'   ? `All OS-Mons fainted...`            : ''
+    battleResult==='lose'   ? `${player.name} fainted...`         : ''
 
   const resultCol =
     battleResult==='win'||battleResult==='caught' ? '#44ff88' :
     battleResult==='ran' ? '#aaaaff' : '#ff6666'
-
-  // Bench: party members that are not the active one
-  const bench = party.slice(1)
 
   return (
     <div className="absolute inset-0 z-20 flex flex-col"
@@ -166,7 +153,7 @@ export default function BattleScreen() {
             }}>
               {resultMsg}
               <div className="font-vt" style={{ fontSize:16, color:'#556', marginTop:6 }}>
-                {battleResult === 'lose' ? 'Blacking out...' : 'Returning to world...'}
+                Returning to world...
               </div>
             </div>
           </div>
@@ -183,67 +170,20 @@ export default function BattleScreen() {
             <div key={i} style={{
               color: line.includes('fainted') ? '#ff8888' :
                      line.includes('caught') || line.includes('Caught') ? '#88ff88' :
-                     line.includes('appeared') || line.includes('battle') ? '#ffffaa' :
-                     line.includes('used') ? '#aaccff' :
-                     line.includes('Go,') ? '#44ffaa' : '#aab',
+                     line.includes('appeared') ? '#ffffaa' :
+                     line.includes('used') ? '#aaccff' : '#aab',
               opacity: i < battleLog.slice(-5).length - 1 ? 0.6 + i * 0.1 : 1,
             }}>{line}</div>
           ))}
         </div>
 
         {/* Action panel */}
-        <div style={{ width:380, padding:'10px 12px', display:'flex', flexDirection:'column', gap:8 }}>
+        <div style={{ width:360, padding:'10px 12px', display:'flex', flexDirection:'column', gap:8 }}>
           {isEnd ? (
             <div className="font-pixel" style={{ fontSize:8, color:'#334', textAlign:'center', margin:'auto' }}>
-              {battleResult === 'lose' ? 'Blacking out...' : 'Returning to world...'}
+              Returning to world...
             </div>
-          ) : showSwitch ? (
-            // ── SWITCH PANEL ──
-            <>
-              <div className="font-pixel" style={{ fontSize:7, color:'#e8a020', marginBottom:2 }}>
-                ⇄ SWITCH OS-MON
-              </div>
-              <div style={{ display:'flex', flexDirection:'column', gap:5, overflowY:'auto', maxHeight:150 }}>
-                {party.map((mon, i) => {
-                  const isCurrent = i === 0
-                  const fainted = mon.curHp <= 0
-                  const pct = Math.max(0, Math.min(100, (mon.curHp / mon.maxHp) * 100))
-                  const hpCol = pct > 50 ? '#3db83d' : pct > 20 ? '#d4a017' : '#c82020'
-                  return (
-                    <button
-                      key={i}
-                      disabled={isCurrent || fainted || isAnimating}
-                      className="font-pixel cursor-pointer text-left"
-                      style={{
-                        padding:'7px 10px', fontSize:7,
-                        background: isCurrent ? '#0a1020' : fainted ? '#150505' : '#080818',
-                        border: isCurrent ? '1.5px solid #2255aa' : fainted ? '1.5px solid #441' : '1.5px solid #1a3a6e',
-                        color: fainted ? '#554' : isCurrent ? '#88aaff' : '#ccd',
-                        opacity: fainted ? 0.5 : 1,
-                        transition:'all 0.1s',
-                      }}
-                      onClick={() => {
-                        dispatch({ type:'SWITCH_OSMON', partyIndex: i })
-                        setShowSwitch(false)
-                      }}>
-                      <div style={{ display:'flex', justifyContent:'space-between' }}>
-                        <span>{mon.name}{isCurrent ? ' (active)' : fainted ? ' ✕' : ''}</span>
-                        <span style={{ color:'#e8a020' }}>Lv.{mon.lv}</span>
-                      </div>
-                      <div style={{ marginTop:3, height:4, background:'#111', borderRadius:2, overflow:'hidden' }}>
-                        <div style={{ height:'100%', width:`${pct}%`, background: hpCol, borderRadius:2 }} />
-                      </div>
-                      <div style={{ fontSize:6, color:'#556', marginTop:2 }}>{mon.curHp}/{mon.maxHp} HP</div>
-                    </button>
-                  )
-                })}
-              </div>
-              <button className="font-pixel cursor-pointer"
-                style={{ padding:'7px', fontSize:7, background:'#0a0a14', color:'#445', border:'1px solid #1a2a3a' }}
-                onClick={() => setShowSwitch(false)}>← BACK</button>
-            </>
           ) : !showMoves ? (
-            // ── MAIN MENU ──
             <>
               <div style={{ display:'flex', gap:8 }}>
                 <button className="font-pixel cursor-pointer" disabled={isAnimating}
@@ -260,12 +200,11 @@ export default function BattleScreen() {
                 </button>
               </div>
               <div style={{ display:'flex', gap:8 }}>
-                <button className="font-pixel cursor-pointer" disabled={isAnimating || bench.length === 0}
-                  style={{ flex:1, padding:'10px 6px', fontSize:8, background:'#081828', color:'#88aaff', border:'1.5px solid #2255aa', transition:'all 0.12s',
-                    opacity: bench.length === 0 ? 0.4 : 1 }}
-                  onMouseEnter={e=>{ if(bench.length>0)(e.currentTarget as HTMLButtonElement).style.background='#0a1e30'}}
-                  onMouseLeave={e=>{ (e.currentTarget as HTMLButtonElement).style.background='#081828'}}
-                  onClick={() => setShowSwitch(true)}>⇄ SWITCH</button>
+                <button className="font-pixel cursor-pointer" disabled={isAnimating}
+                  style={{ flex:1, padding:'10px 6px', fontSize:8, background:'#081808', color:'#88ff88', border:'1.5px solid #44aa44', transition:'all 0.12s' }}
+                  onMouseEnter={e=>{ (e.currentTarget as HTMLButtonElement).style.background='#0a2008'}}
+                  onMouseLeave={e=>{ (e.currentTarget as HTMLButtonElement).style.background='#081808'}}
+                  onClick={() => dispatch({ type:'RUN' })}>↩ RUN</button>
                 <button className="font-pixel cursor-pointer" disabled={isAnimating || items.potion <= 0}
                   style={{ flex:1, padding:'10px 6px', fontSize:8, background:'#181808', color:'#ffffaa', border:'1.5px solid #aaaa44', transition:'all 0.12s' }}
                   onMouseEnter={e=>{ (e.currentTarget as HTMLButtonElement).style.background='#202008'}}
@@ -274,23 +213,15 @@ export default function BattleScreen() {
                   ✦ HEAL <span style={{ fontSize:7, color:'#aaaa44' }}>({items.potion})</span>
                 </button>
               </div>
-              <div style={{ display:'flex', gap:8 }}>
+              {items.superball > 0 && (
                 <button className="font-pixel cursor-pointer" disabled={isAnimating}
-                  style={{ flex:1, padding:'8px 6px', fontSize:7, background:'#081808', color:'#88ff88', border:'1px solid #44aa44', transition:'all 0.12s' }}
-                  onMouseEnter={e=>{ (e.currentTarget as HTMLButtonElement).style.background='#0a2008'}}
-                  onMouseLeave={e=>{ (e.currentTarget as HTMLButtonElement).style.background='#081808'}}
-                  onClick={() => dispatch({ type:'RUN' })}>↩ RUN</button>
-                {items.superball > 0 && (
-                  <button className="font-pixel cursor-pointer" disabled={isAnimating}
-                    style={{ flex:1, padding:'8px 6px', fontSize:7, background:'#0a1030', color:'#aaddff', border:'1px solid #2255aa' }}
-                    onClick={() => dispatch({ type:'THROW_BALL', ballType:'superball' })}>
-                    ◎ S.BALL ({items.superball})
-                  </button>
-                )}
-              </div>
+                  style={{ padding:'8px 6px', fontSize:7, background:'#0a1030', color:'#aaddff', border:'1px solid #2255aa' }}
+                  onClick={() => dispatch({ type:'THROW_BALL', ballType:'superball' })}>
+                  ◎ SUPER BALL ({items.superball}) — higher catch rate
+                </button>
+              )}
             </>
           ) : (
-            // ── MOVES PANEL ──
             <>
               <div style={{ display:'flex', gap:6 }}>
                 {player.moves.slice(0,2).map(mId => (

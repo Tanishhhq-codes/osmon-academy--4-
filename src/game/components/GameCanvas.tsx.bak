@@ -586,72 +586,17 @@ export default function GameCanvas() {
         const portal = area.portals.find(p => p.x === fx && p.y === fy)
         if (portal) { dispatch({type:'TRANSITION_AREA', area:portal.to, x:portal.tx, y:portal.ty}); return }
       }
-      // NPC directly in front or adjacent
-      const npcIdx = area.npcs.findIndex(n => n.x === fx && n.y === fy)
-      const npcIdxFallback = npcIdx === -1
-        ? area.npcs.findIndex(n => Math.abs(n.x - px) + Math.abs(n.y - py) === 1)
-        : -1
-      const realIdx = npcIdx !== -1 ? npcIdx : npcIdxFallback
-      if (realIdx === -1) return
-      const npc = area.npcs[realIdx]
-      const areaKey = stateRef.current.currentArea
-      const defeatedKey = `${areaKey}__${realIdx}`
-      const talkedKey = `${areaKey}__${realIdx}`
-      const isDefeated = stateRef.current.npcDefeated[defeatedKey]
-      const hasTalked = stateRef.current.npcTalked[talkedKey]
-
-      // Classify NPC
-      const battleLine = npc.lines.find(l => typeof l !== 'string' && l.type === 'battle') as { type: string; monId?: number; text?: string } | undefined
-      const quizLine = npc.lines.find(l => typeof l !== 'string' && l.type === 'quiz') as { type: string; text?: string } | undefined
-      const hasBattle = !!battleLine
-      const hasQuiz = !!quizLine
-
-      // Already defeated (battle won or quiz answered) — show post-interaction message
-      if (isDefeated) {
-        const postText = hasBattle
-          ? "...I need to train harder. Come back when you want a rematch!"
-          : "You already answered my question correctly. Well done, trainer!"
-        dispatch({ type: 'START_DIALOGUE', lines: [{ speaker: npc.name, text: postText, color: npc.color }] })
-        return
-      }
-
-      // Non-battle, non-quiz NPC that has already been talked to — repeat last line only
-      if (!hasBattle && !hasQuiz && hasTalked) {
-        const lastLine = npc.lines[npc.lines.length - 1]
-        const text = typeof lastLine === 'string' ? lastLine : (lastLine.text ?? '')
-        dispatch({ type: 'START_DIALOGUE', lines: [{ speaker: npc.name, text, color: npc.color }] })
-        return
-      }
-
-      // Mark talked (first time through full dialogue)
-      if (!hasTalked) {
-        dispatch({ type: 'MARK_NPC_TALKED', area: areaKey, npcIndex: realIdx })
-      }
-
-      // Build dialogue lines, extracting pendingBattle from battle line
-      const dialogueLines = npcLinesToDialogue(npc)
-      const pendingBattle = battleLine
-        ? { monId: battleLine.monId ?? 1, lv: 5 + Math.floor(Math.random() * 5) }
-        : null
-
-      dispatch({ type: 'START_DIALOGUE', lines: dialogueLines, pendingBattle })
-
-      // Store NPC info for post-interaction defeat marking
-      if (hasBattle) {
-        // BattleWatcher will read this and dispatch MARK_NPC_DEFEATED on win
-        sessionStorage.setItem('pendingNpcDefeated', JSON.stringify({ area: areaKey, npcIndex: realIdx }))
-      }
-      if (hasQuiz) {
-        // QuizModal will read this and dispatch MARK_NPC_DEFEATED on answer
-        sessionStorage.setItem('pendingNpcQuiz', JSON.stringify({ area: areaKey, npcIndex: realIdx }))
-      }
+      // NPC directly in front or at player's adjacent tiles
+      const npc = area.npcs.find(n => n.x === fx && n.y === fy)
+        ?? area.npcs.find(n => Math.abs(n.x - px) + Math.abs(n.y - py) === 1)
+      if (npc) dispatch({type:'START_DIALOGUE', lines: npcLinesToDialogue(npc)})
     }
 
     const npcLinesToDialogue = (npc: NpcData) =>
       npc.lines.map(l => {
         if (typeof l === 'string') return {speaker: npc.name, text: l, color: npc.color}
         if (l.type==='quiz')   return {speaker: npc.name, text:(l.text??'Quiz time!')+' [QUIZ]',   color:npc.color}
-        if (l.type==='battle') return {speaker: npc.name, text:(l.text??'Battle! Face me!')+' [BATTLE]', color:npc.color}
+        if (l.type==='battle') return {speaker: npc.name, text:(l.text??'Battle!')+' [BATTLE]',    color:npc.color}
         return {speaker: npc.name, text: l.text ?? '', color: npc.color}
       })
 
